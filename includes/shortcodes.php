@@ -26,10 +26,17 @@ function mostrar_perfil_usuario_mailchimp() {
 
 
     // Variables para la plantilla
-    $pais_mailchimp      = $merge_fields['PAS'] ?? '';
-    $empresa_mailchimp   = $merge_fields['EMPRESA'] ?? '';
-    $puesto_mailchimp    = $merge_fields['PUESTO'] ?? '';
-    $telefono_mailchimp  = $merge_fields['TELFONO'] ?? '';
+    $pais_mailchimp      = $merge_fields['COUNTRY'] ?? '';
+    $empresa_mailchimp   = $merge_fields['COMPANY'] ?? '';
+    $puesto_mailchimp    = $merge_fields['JOB'] ?? '';
+    // Primero toma PHONE, si está vacío toma TELEPHONE
+    if (!empty($merge_fields['PHONE'])) {
+        $telefono_mailchimp = $merge_fields['PHONE'];
+    } elseif (!empty($merge_fields['TELEPHONE'])) {
+        $telefono_mailchimp = $merge_fields['TELEPHONE'];
+    } else {
+        $telefono_mailchimp = '';
+    }
     // Variables que el template usará:
     // $user, $estados_mailchimp, $puesto_mailchimp, $pais_mailchimp, $telefono_mailchimp, $empresa_mailchimp
 

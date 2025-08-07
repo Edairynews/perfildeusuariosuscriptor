@@ -4,7 +4,7 @@ function pum_procesar_formulario_perfil($user) {
     $first_name = sanitize_text_field($_POST['first_name']);
     $last_name  = sanitize_text_field($_POST['last_name']);
     $puesto     = sanitize_text_field($_POST['puesto']);
-    $pais       = sanitize_text_field($_POST['pas']);
+    $pais       = sanitize_text_field($_POST['pais']);
     $telefono   = sanitize_text_field($_POST['telefono']); // corregido el typo
     $empresa    = sanitize_text_field($_POST['empresa']);
 

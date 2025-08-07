@@ -63,7 +63,7 @@ if (!isset($telefono_mailchimp)) {
                         <input type="text" name="last_name" value="<?php echo esc_attr($current_user->last_name); ?>" required></p>
 
                         <p><label>País:</label><br>
-                        <input type="text" name="pas" value="<?php echo esc_attr($pais_mailchimp); ?>"></p>
+                        <input type="text" name="pais" value="<?php echo esc_attr($pais_mailchimp); ?>"></p>
                     </div>
 
                     <div class="fila-profile">

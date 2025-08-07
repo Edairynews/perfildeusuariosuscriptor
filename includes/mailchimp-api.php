@@ -95,7 +95,7 @@ function pum_obtener_datos_mailchimp($email) {
 }
 
 
-function pum_actualizar_mailchimp_merge_fields($email, $fname, $lname, $puesto = '', $pais = '', $telefono = '', $empresa = '') {
+function pum_actualizar_mailchimp_merge_fields($email, $fname, $lname, $puesto = '', $pais = '', $telefono = '', $empresa = '', ) {
     $api_key = get_option('pum_mailchimp_api_key');
     $listas = get_option('pum_mailchimp_lists', []);
 
@@ -106,13 +106,13 @@ function pum_actualizar_mailchimp_merge_fields($email, $fname, $lname, $puesto =
 
     $body = json_encode([
         'merge_fields' => [
-            'NOMBRE'   => $fname,
-            'APELLIDO' => $lname,
-            'PAS'   => $pais,
-            'EMPRESA'  => $empresa,
-            'PUESTO'   => $puesto,
-            'TELFONO'  => $telefono,
-            
+            'FNAME'   => $fname,
+            'LNAME' => $lname,
+            'COUNTRY'   => $pais,
+            'COMPANY'  => $empresa,
+            'JOB'   => $puesto,
+            'PHONE'  => $telefono,
+            'TELEPHONE'  => $telefono,
         ]
     ]);
 
@@ -218,67 +218,44 @@ function pum_suscribir_usuario_a_lista($list_id) {
     $email = $user->user_email;
     $subscriber_hash = md5(strtolower($email));
 
-    // Obtenemos merge_fields de la primera lista ya suscripta
+    // Obtenemos datos existentes de Mailchimp para no perder info
     $datos = pum_obtener_datos_mailchimp($email);
     $merge_fields_existentes = [];
-
     if (!empty($datos) && isset($datos[0]['datos']['merge_fields'])) {
         $merge_fields_existentes = $datos[0]['datos']['merge_fields'];
     }
 
-    // Función auxiliar para elegir el primer campo que exista de un listado posible
-    function campo_valor($campos_posibles, $merge_fields_existentes, $user) {
-        foreach ($campos_posibles as $campo) {
-            if (isset($merge_fields_existentes[$campo]) && $merge_fields_existentes[$campo] !== '') {
-                return $merge_fields_existentes[$campo];
-            }
+    // Función para obtener valor del campo, chequeando primero Mailchimp, luego WP
+    function campo_valor_simple($campo, $merge_fields_existentes, $user) {
+        if (!empty($merge_fields_existentes[$campo])) {
+            return $merge_fields_existentes[$campo];
         }
-        // Si no está en Mailchimp, chequeamos datos en WP o meta
-        switch ($campos_posibles[0]) {
+        switch ($campo) {
             case 'FNAME':
-            case 'NOME':
-            case 'NOMBRE':
                 return $user->first_name;
             case 'LNAME':
-            case 'APELLIDO':
-            case 'SOBRENOME':
                 return $user->last_name;
             case 'COUNTRY':
-            case 'PAS':
                 return get_user_meta($user->ID, 'country', true);
             case 'COMPANY':
-            case 'EMPRESA':
                 return get_user_meta($user->ID, 'company', true);
-            case 'JOBTITLE':
-            case 'PUESTO':
-            case 'PROFESION':
+            case 'JOB':
                 return get_user_meta($user->ID, 'job_title', true);
-            case 'SOURCE':
-            case 'FUENTE':
-            case 'FONTE':
-                return get_user_meta($user->ID, 'source', true);
             case 'PHONE':
-            case 'TELFONO':
-            case 'TELEFONE':
+            case 'TELEPHONE':
+                // En  WP se usa'phone' para ambos
                 return get_user_meta($user->ID, 'phone', true);
             default:
                 return '';
         }
     }
 
-    $merge_fields = [
-        'FNAME'    => campo_valor(['FNAME', 'NOME', 'NOMBRE'], $merge_fields_existentes, $user),
-        'LNAME'    => campo_valor(['LNAME', 'APELLIDO', 'SOBRENOME'], $merge_fields_existentes, $user),
-        'COUNTRY'  => campo_valor(['COUNTRY', 'PAS'], $merge_fields_existentes, $user),
-        'COMPANY'  => campo_valor(['COMPANY', 'EMPRESA'], $merge_fields_existentes, $user),
-        'JOBTITLE' => campo_valor(['JOBTITLE', 'PUESTO', 'PROFESION'], $merge_fields_existentes, $user),
-        'SOURCE'   => campo_valor(['SOURCE', 'FUENTE', 'FONTE'], $merge_fields_existentes, $user),
-        'PHONE'    => campo_valor(['PHONE', 'TELFONO', 'TELEFONE'], $merge_fields_existentes, $user),
-    ];
+    $campos_mailchimp = ['FNAME', 'LNAME', 'COUNTRY', 'COMPANY', 'JOB', 'PHONE', 'TELEPHONE'];
 
-    // Mailchimp quiere los campos exactamente como están definidos en la lista, 
-    // pero para que el PUT funcione, igual ponelos con nombres comunes (puede que funcione)
-    // Si no, podés probar a enviar solo los que no están vacíos y con el primer nombre válido que tenga la lista (más complejo).
+    $merge_fields = [];
+    foreach ($campos_mailchimp as $campo) {
+        $merge_fields[$campo] = campo_valor_simple($campo, $merge_fields_existentes, $user);
+    }
 
     $body = json_encode([
         'email_address' => $email,
