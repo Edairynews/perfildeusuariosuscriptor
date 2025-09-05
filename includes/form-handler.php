@@ -45,7 +45,7 @@ function pum_suscribirme_ajax_handler() {
 
     $ok = pum_suscribir_usuario_a_lista($list_id);
     if ($ok) {
-        wp_send_json(['success' => true, 'message' => 'Te suscribiste correctamente, revisá tu email.']);
+        wp_send_json(['success' => true, 'message' => 'Te suscribiste con éxito. Revisá tu email.']);
     } else {
         wp_send_json(['success' => false, 'message' => 'Error al suscribirte.']);
     }

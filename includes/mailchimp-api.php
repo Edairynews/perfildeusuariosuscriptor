@@ -204,12 +204,109 @@ function pum_actualizar_mailchimp_merge_fields($email, $fname, $lname, $puesto =
 //     return ($code == 200 || $code == 201);
 // }
 
+function get_mailchimp_list_name_by_id($list_id) {
+    $lists = get_option('pum_mailchimp_lists');
+
+    if (!is_array($lists)) {
+        return null;
+    }
+
+    foreach ($lists as $list) {
+        if (isset($list['id']) && $list['id'] === $list_id) {
+            return $list['name'];
+        }
+    }
+
+    return null;
+}
+
+function registrar_usuario_remoto2($email, $nombre_completo, $pais, $wp_remoto) {
+    
+    $user_app = 'Dev eDairy News';
+	$pass_app = $wp_remoto['app_pass'];
+
+	$url= $wp_remoto['url'];
+
+	$nombre_completo= $userdata['user_login'];
+	$email = $userdata['user_email'];
+	$wp_generate_password  = wp_generate_password(12, true, true);
+	$nombre_completo = $userdata['first_name'];
+    $nombre_completo = $userdata['last_name'];
+
+	$response = wp_remote_post( $url, array(
+		'body'    => $data,
+		'headers' => array(
+			'Authorization' => 'Basic ' . base64_encode( $user_app . ':' . $pass_app ),
+		),
+	) );
+
+	if (is_wp_error($response)) {
+		error_log(print_r($response->get_error_message(),true));
+		return;
+	}
+
+	$response = json_decode($response['body']??'{}',true);
+
+	if ( isset($response['code']) ) {
+		error_log(print_r($response,true));
+		return;
+	}
+
+	if ( isset($response['id']) ) {
+		update_user_meta( $user_id, 'id_user_remote_site', $response['id'] );
+	}
+}
+
+function registrar_usuario_remoto($email, $nombre_completo, $pais, $wp_remoto) {
+
+    $username = sanitize_user(explode('@', $email)[0] . rand(100, 999), true);
+    $password = wp_generate_password(12, true, true);
+
+    $body = [
+        'username' => $username,
+        'email'    => $email,
+        'name'     => $nombre_completo,
+        'password' => $password
+        // 'meta'     => [
+        //     'country' => $pais
+        // ]
+    ];
+
+    $auth = base64_encode($wp_remoto['usuario'] . ':' . $wp_remoto['app_pass']);
+
+    $response = wp_remote_post($wp_remoto['url'], [
+        'headers' => [
+            'Authorization' => 'Basic ' . $auth,
+            'Content-Type'  => 'application/json',
+        ],
+        'body'    => json_encode($body),
+        'timeout' => 15,
+    ]);
+
+    if (is_wp_error($response)) {
+        error_log('❌ Error de conexión al registrar usuario remoto: ' . $response->get_error_message());
+        return false;
+    }
+
+    $status_code   = wp_remote_retrieve_response_code($response);
+    $response_body = wp_remote_retrieve_body($response);
+
+    // 📌 DEBUG COMPLETO
+    error_log("📡 Registro remoto en {$wp_remoto['url']} → HTTP $status_code");
+    error_log("📩 Respuesta: " . $response_body);
+
+    if ($status_code === 201 || $status_code === 200) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 function pum_suscribir_usuario_a_lista($list_id) {
     if (!is_user_logged_in()) {
         return false;
     }
-
+  
     $user = wp_get_current_user();
     $api_key = get_option('pum_mailchimp_api_key');
     if (!$api_key || !$list_id) return false;
@@ -282,4 +379,24 @@ function pum_suscribir_usuario_a_lista($list_id) {
 
     $code = wp_remote_retrieve_response_code($response);
     return ($code == 200 || $code == 201);
+     if ($code == 200 || $code == 201) {
+
+        // Buscamos el nombre de la lista según el id
+        $list_name = get_mailchimp_list_name_by_id($list_id);
+
+        global $mapa_wp_remotos_por_nombre;
+
+        if ($list_name && isset($mapa_wp_remotos_por_nombre[$list_name])) {
+            $wp_remoto = $mapa_wp_remotos_por_nombre[$list_name];
+
+            $nombre_completo = trim($merge_fields['FNAME'] . ' ' . $merge_fields['LNAME']);
+            $pais = $merge_fields['COUNTRY'];
+
+            registrar_usuario_remoto($email, $nombre_completo, $pais, $wp_remoto);
+        }
+        return true;
+    }
+
 }
+
+

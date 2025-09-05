@@ -136,8 +136,8 @@ input.button-save:active{
 .newsletter-card {
   border: 1px solid #ccc;
   border-radius: 8px;
-  width: 200px;
-  text-align: center;
+  width: 275px;
+  text-align: left;
 }
 
 .img-card {
@@ -176,4 +176,82 @@ input.button-save:active{
     background-color: #E4E9EB;
     padding: 1px;
     font-weight: 400;
+}
+
+.newsletter-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.newsletter-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.newsletter-img {
+  width: 100%;
+  height: 140px !important;
+  object-fit: cover;
+}
+
+.newsletter-body {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.newsletter-title {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.newsletter-desc {
+  font-size: 14px;
+  color: #555;
+  flex-grow: 1;
+  
+}
+
+.newsletter-divider {
+  border: none;
+  border-top: 1px solid #ddd;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.estado {
+  font-weight: bold;
+  margin: auto !important;
+  padding-top: 4px;
+}
+
+.estado.suscripto {
+  color: green;
+}
+
+.estado.pendiente {
+  color: rgb(139, 139, 139);
+}
+
+.estado.no-suscripto {
+  color: #a5a5a5;
+}
+
+.btn-suscribirme {
+  color: #01496d !important;
+  border: none !important;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.btn-suscribirme:hover {
+  color: #005f8d !important;
+  background: none !important;
+  
 }
